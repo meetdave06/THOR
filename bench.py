@@ -23,6 +23,8 @@ parser.add_argument('--vanilla', action='store_true',
                     help='Run the tracker without THOR')
 parser.add_argument('-v', '--viz', action='store_true',
                     help='Show the tracked scene, the stored templated and the modulated view')
+parser.add_argument('--vis_download', action='store_true',
+        help='whether download visualized result')
 parser.add_argument('--verbose', action='store_true',
                     help='Print additional info about THOR')
 parser.add_argument('--lb_type', type=str, default='ensemble',

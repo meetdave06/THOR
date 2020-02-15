@@ -7,6 +7,7 @@ from shutil import rmtree
 
 from .bench_utils.pysot.datasets import VOTDataset
 from .bench_utils.pysot.evaluation import AccuracyRobustnessBenchmark, EAOBenchmark
+from .bench_utils.pysot.utils.make_video import make_video
 from .bench_utils.pyvotkit.region import vot_overlap, vot_float2str
 from .bench_utils.bbox_helper import get_axis_aligned_bbox, cxy_wh_2_rect
 from .bench_utils.benchmark_helper import load_dataset
@@ -16,6 +17,15 @@ def test_vot(v_id, tracker, video, args):
     image_files, gt = video['image_files'], video['gt']
 
     start_frame, end_frame, lost_times, toc = 0, len(image_files), 0, 0
+
+    # save result
+    video_path = join('benchmark/results/', args.dataset, args.save_path,
+                      'baseline', video['name'])
+    if not isdir(video_path): makedirs(video_path)
+    result_path = join(video_path, '{:s}_001.txt'.format(video['name']))
+
+    if args.vis_download:
+        video_download = make_video(video_path)
 
     for f, image_file in enumerate(image_files):
         im = cv2.imread(image_file)
@@ -64,7 +74,7 @@ def test_vot(v_id, tracker, video, args):
         toc += cv2.getTickCount() - tic
 
         # visualization (skip lost frame)
-        if args.viz and f >= start_frame:
+        if (args.viz or args.vis_download) and f >= start_frame:
             im_show = im.copy()
             if f == 0: cv2.destroyAllWindows()
             if gt.shape[0] > f:
@@ -85,16 +95,14 @@ def test_vot(v_id, tracker, video, args):
             cv2.putText(im_show, str(f), (40, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
             cv2.putText(im_show, str(lost_times), (40, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
             cv2.putText(im_show, f"{state['score']:.4f}", (40, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-
-            cv2.imshow(video['name'], im_show)
-            cv2.waitKey(1)
+            if args.viz:
+                cv2.imshow(video['name'], im_show)
+                cv2.waitKey(1)
+            if args.vis_download:
+                video_download.write(im_show)
     toc /= cv2.getTickFrequency()
 
-    # save result
-    video_path = join('benchmark/results/', args.dataset, args.save_path,
-                      'baseline', video['name'])
-    if not isdir(video_path): makedirs(video_path)
-    result_path = join(video_path, '{:s}_001.txt'.format(video['name']))
+
     with open(result_path, "w") as fin:
         for x in regions:
             fin.write("{:d}\n".format(x)) if isinstance(x, int) else \
