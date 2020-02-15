@@ -24,8 +24,15 @@ def test_vot(v_id, tracker, video, args):
     if not isdir(video_path): makedirs(video_path)
     result_path = join(video_path, '{:s}_001.txt'.format(video['name']))
 
+    # Get image width and height
+    for sample_image in image_files:
+        image_height = sample_image.shape[0]
+        image_width = sample_image.shape[1]
+       	break
+
+
     if args.vis_download:
-        video_download = make_video(video_path)
+        video_download = make_video(video_path,image_width,image_height)
 
     for f, image_file in enumerate(image_files):
         im = cv2.imread(image_file)
